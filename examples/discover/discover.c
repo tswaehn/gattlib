@@ -49,7 +49,7 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
-	connection = gattlib_connect(NULL, argv[1], GATTLIB_CONNECTION_OPTIONS_LEGACY_DEFAULT);
+	connection = gattlib_connect(NULL, argv[1], GATTLIB_CONNECTION_OPTIONS_LEGACY_DEFAULT, 0);
 	if (connection == NULL) {
 		GATTLIB_LOG(GATTLIB_ERROR, "Fail to connect to the bluetooth device.");
 		return 1;

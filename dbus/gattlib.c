@@ -108,6 +108,67 @@ void get_device_path_from_mac(const char *adapter_name, const char *mac_address,
 	snprintf(object_path, object_path_len, "/org/bluez/%s/dev_%s", adapter, device_address_str);
 }
 
+int gattlib_is_paired(void* adapter, const char *mac) {
+    struct gattlib_adapter *gattlib_adapter = adapter;
+    const char* adapter_name = NULL;
+    char object_path[100];
+    GError *error = NULL;
+
+    if (gattlib_adapter == NULL) {
+        return -1;
+    }
+
+    adapter_name = gattlib_adapter->adapter_name;
+
+    get_device_path_from_mac(adapter_name, mac, object_path, sizeof(object_path));
+
+    OrgBluezDevice1* device = org_bluez_device1_proxy_new_for_bus_sync(
+            G_BUS_TYPE_SYSTEM,
+            G_DBUS_OBJECT_MANAGER_CLIENT_FLAGS_NONE,
+            "org.bluez",
+            object_path,
+            NULL,
+            &error);
+    if (error) {
+        GATTLIB_LOG(GATTLIB_ERROR, "Failed to connect to DBus Bluez Device: %s", error->message);
+        g_error_free(error);
+        return -2;
+    }
+
+    if (device == NULL) {
+        return -3;
+    }
+
+    bool is_paired = org_bluez_device1_get_paired(device);
+    return is_paired;
+}
+
+int gattlib_remove_paired_device_sync(void *adapter, const char *mac) {
+    struct gattlib_adapter *gattlib_adapter = adapter;
+    const char* adapter_name = NULL;
+    char object_path[100];
+    GError *error = NULL;
+
+    if (gattlib_adapter == NULL) {
+        return -1;
+    }
+
+    adapter_name = gattlib_adapter->adapter_name;
+
+    get_device_path_from_mac(adapter_name, mac, object_path, sizeof(object_path));
+
+    GATTLIB_LOG(GATTLIB_INFO, "Unpairing device '%s'", mac);
+    org_bluez_adapter1_call_remove_device_sync(gattlib_adapter->adapter_proxy, object_path, NULL, &error);
+
+    if (error) {
+        GATTLIB_LOG(GATTLIB_ERROR, "Failed to unpair from DBus Bluez Device: %s", error->message);
+        g_error_free(error);
+        return -2;
+    }
+
+    return 0;
+}
+
 /**
  * @param src		Local Adaptater interface
  * @param dst		Remote Bluetooth address
@@ -116,7 +177,7 @@ void get_device_path_from_mac(const char *adapter_name, const char *mac_address,
  * @param psm       Specify the PSM for GATT/ATT over BR/EDR
  * @param mtu       Specify the MTU size
  */
-gatt_connection_t *gattlib_connect(void* adapter, const char *dst, unsigned long options)
+gatt_connection_t *gattlib_connect(void* adapter, const char *dst, unsigned long options, bool do_pair)
 {
 	struct gattlib_adapter *gattlib_adapter = adapter;
 	const char* adapter_name = NULL;
@@ -176,7 +237,16 @@ gatt_connection_t *gattlib_connect(void* adapter, const char *dst, unsigned long
 		connection);
 
 	error = NULL;
-	org_bluez_device1_call_connect_sync(device, NULL, &error);
+
+    if (do_pair) {
+        // connect and pair
+        GATTLIB_LOG(GATTLIB_INFO, "Pairing Device '%s'", dst);
+        org_bluez_device1_call_pair_sync(device, NULL, &error);
+    } else {
+        // just connect, no paring
+        org_bluez_device1_call_connect_sync(device, NULL, &error);
+    }
+
 	if (error) {
 		if (strncmp(error->message, m_dbus_error_unknown_object, strlen(m_dbus_error_unknown_object)) == 0) {
 			// You might have this error if the computer has not scanned or has not already had

@@ -61,7 +61,7 @@ static void *ble_connect_device(void *arg) {
 
 	printf("------------START %s ---------------\n", addr);
 
-	gatt_connection = gattlib_connect(NULL, addr, GATTLIB_CONNECTION_OPTIONS_LEGACY_DEFAULT);
+	gatt_connection = gattlib_connect(NULL, addr, GATTLIB_CONNECTION_OPTIONS_LEGACY_DEFAULT, 0);
 	if (gatt_connection == NULL) {
 		GATTLIB_LOG(GATTLIB_ERROR, "Fail to connect to the bluetooth device.");
 		goto connection_exit;

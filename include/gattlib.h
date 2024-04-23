@@ -280,6 +280,9 @@ int gattlib_adapter_scan_disable(void* adapter);
  */
 int gattlib_adapter_close(void* adapter);
 
+int gattlib_is_paired(void* adapter, const char *mac);
+int gattlib_remove_paired_device_sync(void *adapter, const char *mac);
+
 /**
  * @brief Function to connect to a BLE device
  *
@@ -287,7 +290,7 @@ int gattlib_adapter_close(void* adapter);
  * @param dst		Remote Bluetooth address
  * @param options	Options to connect to BLE device. See `GATTLIB_CONNECTION_OPTIONS_*`
  */
-gatt_connection_t *gattlib_connect(void *adapter, const char *dst, unsigned long options);
+gatt_connection_t *gattlib_connect(void *adapter, const char *dst, unsigned long options, bool do_pair);
 
 /**
  * @brief Function to asynchronously connect to a BLE device

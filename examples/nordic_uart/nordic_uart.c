@@ -75,7 +75,7 @@ int main(int argc, char *argv[]) {
 
 	m_connection = gattlib_connect(NULL, argv[1],
 				       GATTLIB_CONNECTION_OPTIONS_LEGACY_BDADDR_LE_RANDOM |
-				       GATTLIB_CONNECTION_OPTIONS_LEGACY_BT_SEC_LOW);
+				       GATTLIB_CONNECTION_OPTIONS_LEGACY_BT_SEC_LOW, 0);
 	if (m_connection == NULL) {
 		GATTLIB_LOG(GATTLIB_ERROR, "Fail to connect to the bluetooth device.");
 		return 1;
