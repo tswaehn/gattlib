@@ -97,7 +97,7 @@ static void *ble_connect_device(void *arg) {
 	pthread_mutex_lock(&g_mutex);
 	printf("------------START %s ---------------\n", addr);
 
-	ret = gattlib_connect(connection->adapter, connection->addr, GATTLIB_CONNECTION_OPTIONS_NONE, on_device_connect, NULL);
+	ret = gattlib_connect(connection->adapter, connection->addr, GATTLIB_CONNECTION_OPTIONS_NONE, 0, on_device_connect, NULL);
 	if (ret != GATTLIB_SUCCESS) {
 		GATTLIB_LOG(GATTLIB_ERROR, "Failed to connect to the bluetooth device '%s'", connection->addr);
 	}

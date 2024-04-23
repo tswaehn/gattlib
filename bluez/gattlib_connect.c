@@ -326,7 +326,7 @@ static void get_connection_options(unsigned long options, BtIOSecLevel *bt_io_se
 }
 
 int gattlib_connect(gattlib_adapter_t* adapter, const char *dst,
-		unsigned long options,
+		unsigned long options, int do_pair,
 		gatt_connect_cb_t connect_cb,
 		void* user_data)
 {

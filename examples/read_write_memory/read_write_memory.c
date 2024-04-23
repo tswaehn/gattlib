@@ -52,7 +52,7 @@ void *connect_ble(void *arg) {
 	int ret, i;
 	size_t len;
 
-	connection = gattlib_connect(NULL, params->mac_address, GATTLIB_CONNECTION_OPTIONS_LEGACY_DEFAULT);
+	connection = gattlib_connect(NULL, params->mac_address, GATTLIB_CONNECTION_OPTIONS_LEGACY_DEFAULT, 0);
 	if (connection == NULL) {
 		GATTLIB_LOG(GATTLIB_ERROR, "Fail to connect to the bluetooth device.");
 		return NULL;

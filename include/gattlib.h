@@ -351,6 +351,28 @@ int gattlib_adapter_scan_disable(gattlib_adapter_t* adapter);
 int gattlib_adapter_close(gattlib_adapter_t* adapter);
 
 /**
+ * @brief Check if a device given by address is already paired
+ *
+ * @param adapter is the context of the newly opened adapter
+ *
+ * @param mac address of device
+ *
+ * @return GATTLIB_SUCCESS on success or GATTLIB_* error code
+ */
+int gattlib_is_paired(gattlib_adapter_t* adapter, const char *mac);
+
+/**
+ * @brief Remove the pairing of a devices given by address
+ *
+ * @param adapter is the context of the newly opened adapter
+ *
+ * @param mac address of device
+ *
+ * @return GATTLIB_SUCCESS on success or GATTLIB_* error code
+ */
+int gattlib_remove_paired_device_sync(gattlib_adapter_t *adapter, const char *mac);
+
+/**
  * @brief Function to asynchronously connect to a BLE device
  *
  * @note This function is mainly used before Bluez v5.42 (prior to D-BUS support)
@@ -364,7 +386,7 @@ int gattlib_adapter_close(gattlib_adapter_t* adapter);
  * @return GATTLIB_SUCCESS on success or GATTLIB_* error code
  */
 int gattlib_connect(gattlib_adapter_t* adapter, const char *dst,
-		unsigned long options,
+		unsigned long options, int do_pair,
 		gatt_connect_cb_t connect_cb,
 		void* user_data);
 

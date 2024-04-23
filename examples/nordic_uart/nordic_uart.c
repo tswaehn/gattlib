@@ -60,7 +60,7 @@ static void usage(char *argv[]) {
 
 static void notification_handler(const uuid_t* uuid, const uint8_t* data, size_t data_length, void* user_data) {
 	uintptr_t i;
-	
+
 	for(i = 0; i < data_length; i++) {
 		printf("%c", data[i]);
 	}

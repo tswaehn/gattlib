@@ -157,6 +157,65 @@ EXIT:
 	return FALSE;
 }
 
+int gattlib_is_paired(gattlib_adapter_t* adapter, const char *mac) {
+    const char* adapter_name = NULL;
+    char object_path[100];
+    GError *error = NULL;
+
+    if (adapter == NULL) {
+        return -1;
+    }
+
+    adapter_name = adapter->name;
+
+    get_device_path_from_mac(adapter_name, mac, object_path, sizeof(object_path));
+
+    OrgBluezDevice1* device = org_bluez_device1_proxy_new_for_bus_sync(
+            G_BUS_TYPE_SYSTEM,
+            G_DBUS_OBJECT_MANAGER_CLIENT_FLAGS_NONE,
+            "org.bluez",
+            object_path,
+            NULL,
+            &error);
+    if (error) {
+        GATTLIB_LOG(GATTLIB_ERROR, "Failed to connect to DBus Bluez Device: %s", error->message);
+        g_error_free(error);
+        return -2;
+    }
+
+    if (device == NULL) {
+        return -3;
+    }
+
+    bool is_paired = org_bluez_device1_get_paired(device);
+    return is_paired;
+}
+
+int gattlib_remove_paired_device_sync(gattlib_adapter_t *adapter, const char *mac) {
+    const char* adapter_name = NULL;
+    char object_path[100];
+    GError *error = NULL;
+
+    if (adapter == NULL) {
+        return -1;
+    }
+
+    adapter_name = adapter->name;
+
+    get_device_path_from_mac(adapter_name, mac, object_path, sizeof(object_path));
+
+    GATTLIB_LOG(GATTLIB_INFO, "Unpairing device '%s'", mac);
+    org_bluez_adapter1_call_remove_device_sync(adapter->backend.adapter_proxy, object_path, NULL, &error);
+
+    if (error) {
+        GATTLIB_LOG(GATTLIB_ERROR, "Failed to unpair from DBus Bluez Device: %s", error->message);
+        g_error_free(error);
+        return -2;
+    }
+
+    return 0;
+}
+
 /**
  * @brief Function to asynchronously connect to a BLE device
  *
@@ -171,7 +230,7 @@ EXIT:
  * @return GATTLIB_SUCCESS on success or GATTLIB_* error code
  */
 int gattlib_connect(gattlib_adapter_t* adapter, const char *dst,
-		unsigned long options,
+		unsigned long options, int do_pair,
 		gatt_connect_cb_t connect_cb,
 		void* user_data)
 {
@@ -256,6 +315,16 @@ int gattlib_connect(gattlib_adapter_t* adapter, const char *dst,
 
 	error = NULL;
 	org_bluez_device1_call_connect_sync(bluez_device, NULL, &error);
+
+    if (do_pair) {
+        // connect and pair
+        GATTLIB_LOG(GATTLIB_INFO, "Pairing Device '%s'", dst);
+        org_bluez_device1_call_pair_sync(device, NULL, &error);
+    } else {
+        // just connect, no paring
+        org_bluez_device1_call_connect_sync(device, NULL, &error);
+    }
+
 	if (error) {
 		if (strncmp(error->message, m_dbus_error_unknown_object, strlen(m_dbus_error_unknown_object)) == 0) {
 			// You might have this error if the computer has not scanned or has not already had

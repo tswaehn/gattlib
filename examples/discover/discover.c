@@ -106,7 +106,7 @@ static void ble_discovered_device(gattlib_adapter_t* adapter, const char* addr, 
 
 	GATTLIB_LOG(GATTLIB_INFO, "Found bluetooth device '%s'", reference_mac_address);
 
-	ret = gattlib_connect(adapter, addr, GATTLIB_CONNECTION_OPTIONS_NONE, on_device_connect, NULL);
+	ret = gattlib_connect(adapter, addr, GATTLIB_CONNECTION_OPTIONS_NONE, 0, on_device_connect, NULL);
 	if (ret != GATTLIB_SUCCESS) {
 		GATTLIB_LOG(GATTLIB_ERROR, "Failed to connect to the bluetooth device '%s'", addr);
 	}
