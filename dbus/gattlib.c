@@ -177,7 +177,7 @@ int gattlib_remove_paired_device_sync(void *adapter, const char *mac) {
  * @param psm       Specify the PSM for GATT/ATT over BR/EDR
  * @param mtu       Specify the MTU size
  */
-gatt_connection_t *gattlib_connect(void* adapter, const char *dst, unsigned long options, bool do_pair)
+gatt_connection_t *gattlib_connect(void* adapter, const char *dst, unsigned long options, int do_pair)
 {
 	struct gattlib_adapter *gattlib_adapter = adapter;
 	const char* adapter_name = NULL;
@@ -299,12 +299,12 @@ FREE_CONN_CONTEXT:
 }
 
 gatt_connection_t *gattlib_connect_async(void *adapter, const char *dst,
-				unsigned long options,
+				unsigned long options, int do_pair,
 				gatt_connect_cb_t connect_cb, void* data)
 {
 	gatt_connection_t *connection;
 
-	connection = gattlib_connect(adapter, dst, options);
+	connection = gattlib_connect(adapter, dst, options, do_pair);
 	if ((connection != NULL) && (connect_cb != NULL)) {
 		connect_cb(connection, data);
 	}
