@@ -381,7 +381,11 @@ static void* _ble_scan_loop_thread(void* args) {
 	g_signal_handler_disconnect(G_DBUS_OBJECT_MANAGER(gattlib_adapter->backend.device_manager), gattlib_adapter->backend.ble_scan.changed_signal_id);
 
 	// Ensure BLE device discovery is stopped
-	gattlib_adapter_scan_disable(gattlib_adapter);
+	if (gattlib_adapter_scan_disable(gattlib_adapter)){
+        GATTLIB_LOG(GATTLIB_ERROR, "_ble_scan_loop_thread: failed to disable scan");
+    } else {
+        GATTLIB_LOG(GATTLIB_DEBUG, "_ble_scan_loop_thread: disabled scan");
+    }
 
 EXIT:
 	g_rec_mutex_unlock(&m_gattlib_mutex);
