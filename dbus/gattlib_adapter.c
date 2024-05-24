@@ -615,11 +615,11 @@ int gattlib_adapter_scan_disable(gattlib_adapter_t* adapter) {
 		goto EXIT;
 	}
 
-	if (!org_bluez_adapter1_get_discovering(adapter->backend.adapter_proxy)) {
+    // if discovering or scanning active => stop discovering
+    // is same like !discovering and !scanning => exit
+    int discovering = org_bluez_adapter1_get_discovering(adapter->backend.adapter_proxy);
+	if (!discovering && !adapter->backend.ble_scan.is_scanning) {
 		GATTLIB_LOG(GATTLIB_DEBUG, "No discovery in progress. We skip discovery stopping (1).");
-		goto EXIT;
-	} else if (!adapter->backend.ble_scan.is_scanning) {
-		GATTLIB_LOG(GATTLIB_DEBUG, "No discovery in progress. We skip discovery stopping (2).");
 		goto EXIT;
 	}
 
