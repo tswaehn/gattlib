@@ -295,7 +295,15 @@ FREE_CONNECTION:
 
 FREE_CONN_CONTEXT:
 	free(conn_context);
-	return NULL;
+
+    // destroy default adapter
+    if(adapter == NULL)
+    {
+        gattlib_adapter_close(gattlib_adapter);
+    }
+
+
+    return NULL;
 }
 
 gatt_connection_t *gattlib_connect_async(void *adapter, const char *dst,
@@ -330,8 +338,8 @@ int gattlib_disconnect(gatt_connection_t* connection) {
 	g_main_loop_unref(conn_context->connection_loop);
 	disconnect_all_notifications(conn_context);
 	
-	free(conn_context->adapter->adapter_name);
-	free(conn_context->adapter);
+	//free(conn_context->adapter->adapter_name);
+	//free(conn_context->adapter);
 
 	free(connection->context);
 	free(connection);
