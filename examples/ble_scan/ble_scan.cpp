@@ -181,8 +181,6 @@ int main(int argc, const char *argv[]) {
         puts("close adapter");
         gattlib_adapter_close(adapter);
 
-        sleep(1);
-
     }
 	puts("Scan completed");
 	pthread_mutex_unlock(&g_mutex);
