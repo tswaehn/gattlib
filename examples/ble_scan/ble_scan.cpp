@@ -170,6 +170,8 @@ int main(int argc, const char *argv[]) {
 
         char * mac = "D8:48:DD:70:24:8F";
 
+        int paired = gattlib_is_paired(adapter, mac);
+        printf("adapter is paired %d\n", paired);
         struct connection_t connection = {
                 .addr = mac,
                 .adapter = adapter,
