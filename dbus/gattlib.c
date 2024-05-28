@@ -140,6 +140,9 @@ int gattlib_is_paired(void* adapter, const char *mac) {
     }
 
     bool is_paired = org_bluez_device1_get_paired(device);
+
+    g_object_unref(device);
+
     return is_paired;
 }
 
