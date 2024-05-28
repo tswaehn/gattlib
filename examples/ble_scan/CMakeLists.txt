@@ -20,13 +20,17 @@
 #
 
 cmake_minimum_required(VERSION 2.8.12)
+project(ble_scan
+        LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 17)
 
 find_package(PkgConfig REQUIRED)
 
 pkg_search_module(GATTLIB REQUIRED gattlib)
 pkg_search_module(PCRE REQUIRED libpcre)
 
-set(ble_scan_SRCS ble_scan.c)
+set(ble_scan_SRCS ble_scan.cpp)
 
 add_executable(ble_scan ${ble_scan_SRCS})
 target_link_libraries(ble_scan ${GATTLIB_LIBRARIES} ${GATTLIB_LDFLAGS} ${PCRE_LIBRARIES} pthread)

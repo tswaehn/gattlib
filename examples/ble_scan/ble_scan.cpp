@@ -26,9 +26,13 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <sys/queue.h>
+#include <sys/resource.h>
 
 #ifdef GATTLIB_LOG_BACKEND_SYSLOG
 #include <syslog.h>
+#include <unistd.h>
+#include <iostream>
+
 #endif
 
 #include "gattlib.h"
@@ -47,8 +51,39 @@ struct connection_t {
 	LIST_ENTRY(connection_t) entries;
 };
 
+void printMemoryUsage() {
+    #define LOG_PREFIX "StatusService>"
+    const uint32_t maxAllowedHeapKb= 50000;
+
+    struct rusage usage;
+    if (getrusage(RUSAGE_SELF, &usage) == 0) {
+        static uint32_t lastHeapSize = 0;
+        uint32_t currentHeapSize = usage.ru_maxrss;
+
+        std::string msg = LOG_PREFIX "<stats> Memory usage: " + std::to_string(currentHeapSize) + " kb; stack " + std::to_string(usage.ru_isrss) + "kb";
+        if (currentHeapSize != lastHeapSize){
+            // print updates
+            auto delta = (int32_t)(currentHeapSize - lastHeapSize);
+            msg += " +" + std::to_string(delta) + "kb";
+            std::cout << msg << std::endl;
+        } else {
+            // nothing changed
+        }
+        lastHeapSize = currentHeapSize;
+
+        //
+        if (currentHeapSize >= maxAllowedHeapKb){
+            std::cout << LOG_PREFIX"reached maximum of allowed heap size -- fire exit of application" << std::endl;
+            std::cerr << LOG_PREFIX << "reached maximum of allowed heap size -- fire exit of application" << std::endl;
+            exit(EXIT_FAILURE);
+        }
+    } else {
+        std::cout  << LOG_PREFIX "Failed to get memory usage" << std::endl;
+    }
+}
+
 static void *ble_connect_device(void *arg) {
-	struct connection_t *connection = arg;
+	struct connection_t *connection = (struct connection_t*) arg;
 	char* addr = connection->addr;
 	gatt_connection_t* gatt_connection;
 	gattlib_primary_service_t* services;
@@ -57,53 +92,22 @@ static void *ble_connect_device(void *arg) {
 	char uuid_str[MAX_LEN_UUID_STR + 1];
 	int ret, i;
 
-	pthread_mutex_lock(&g_mutex);
 
-	printf("------------START %s ---------------\n", addr);
+        printf("------------START %s ---------------\n", addr);
 
-	gatt_connection = gattlib_connect(NULL, addr, GATTLIB_CONNECTION_OPTIONS_LEGACY_DEFAULT, 0);
-	if (gatt_connection == NULL) {
-		GATTLIB_LOG(GATTLIB_ERROR, "Fail to connect to the bluetooth device.");
-		goto connection_exit;
-	} else {
-		puts("Succeeded to connect to the bluetooth device.");
-	}
+        gatt_connection = gattlib_connect(NULL, addr, GATTLIB_CONNECTION_OPTIONS_LEGACY_DEFAULT, 0);
+        if (gatt_connection == NULL) {
+            GATTLIB_LOG(GATTLIB_ERROR, "Fail to connect to the bluetooth device.");
+            goto connection_exit;
+        } else {
+            puts("Succeeded to connect to the bluetooth device.");
+        }
 
-	ret = gattlib_discover_primary(gatt_connection, &services, &services_count);
-	if (ret != 0) {
-		GATTLIB_LOG(GATTLIB_ERROR, "Fail to discover primary services.");
-		goto disconnect_exit;
-	}
-
-	for (i = 0; i < services_count; i++) {
-		gattlib_uuid_to_string(&services[i].uuid, uuid_str, sizeof(uuid_str));
-
-		printf("service[%d] start_handle:%02x end_handle:%02x uuid:%s\n", i,
-				services[i].attr_handle_start, services[i].attr_handle_end,
-				uuid_str);
-	}
-	free(services);
-
-	ret = gattlib_discover_char(gatt_connection, &characteristics, &characteristics_count);
-	if (ret != 0) {
-		GATTLIB_LOG(GATTLIB_ERROR, "Fail to discover characteristics.");
-		goto disconnect_exit;
-	}
-	for (i = 0; i < characteristics_count; i++) {
-		gattlib_uuid_to_string(&characteristics[i].uuid, uuid_str, sizeof(uuid_str));
-
-		printf("characteristic[%d] properties:%02x value_handle:%04x uuid:%s\n", i,
-				characteristics[i].properties, characteristics[i].value_handle,
-				uuid_str);
-	}
-	free(characteristics);
-
-disconnect_exit:
-	gattlib_disconnect(gatt_connection);
+        gattlib_disconnect(gatt_connection);
+        puts("disconnected from device");
 
 connection_exit:
 	printf("------------DONE %s ---------------\n", addr);
-	pthread_mutex_unlock(&g_mutex);
 	return NULL;
 }
 
@@ -117,7 +121,7 @@ static void ble_discovered_device(void *adapter, const char* addr, const char* n
 		printf("Discovered %s\n", addr);
 	}
 
-	connection = malloc(sizeof(struct connection_t));
+	connection = (struct connection_t*) malloc(sizeof(struct connection_t));
 	if (connection == NULL) {
 		GATTLIB_LOG(GATTLIB_ERROR, "Failt to allocate connection.");
 		return;
@@ -154,21 +158,34 @@ int main(int argc, const char *argv[]) {
 
 	LIST_INIT(&g_ble_connections);
 
-	ret = gattlib_adapter_open(adapter_name, &adapter);
-	if (ret) {
-		GATTLIB_LOG(GATTLIB_ERROR, "Failed to open adapter.");
-		return 1;
-	}
+    pthread_mutex_lock(&g_mutex);
 
-	pthread_mutex_lock(&g_mutex);
-	ret = gattlib_adapter_scan_enable(adapter, ble_discovered_device, BLE_SCAN_TIMEOUT, NULL /* user_data */);
-	if (ret) {
-		GATTLIB_LOG(GATTLIB_ERROR, "Failed to scan.");
-		goto EXIT;
-	}
+    for (uint32_t x=0;x<10000;x++) {
+        printf("iteration %d\n", x);
+        printMemoryUsage();
 
-	gattlib_adapter_scan_disable(adapter);
+        puts("open adapter");
 
+        ret = gattlib_adapter_open(adapter_name, &adapter);
+        if (ret) {
+            GATTLIB_LOG(GATTLIB_ERROR, "Failed to open adapter.");
+            return 1;
+        }
+
+        char * mac = "D8:48:DD:70:24:8F";
+
+        struct connection_t connection = {
+                .addr = mac,
+        };
+
+        //ble_connect_device(&connection);
+
+
+        puts("close adapter");
+        gattlib_adapter_scan_disable(adapter);
+
+        sleep(1);
+    }
 	puts("Scan completed");
 	pthread_mutex_unlock(&g_mutex);
 
