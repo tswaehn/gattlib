@@ -165,7 +165,6 @@ int main(int argc, const char *argv[]) {
         printMemoryUsage();
 
         puts("open adapter");
-
         ret = gattlib_adapter_open(adapter_name, &adapter);
         if (ret) {
             GATTLIB_LOG(GATTLIB_ERROR, "Failed to open adapter.");
@@ -182,7 +181,7 @@ int main(int argc, const char *argv[]) {
 
 
         puts("close adapter");
-        gattlib_adapter_scan_disable(adapter);
+        gattlib_adapter_close(adapter);
 
         sleep(1);
     }
