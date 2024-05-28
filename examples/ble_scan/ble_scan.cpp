@@ -95,7 +95,7 @@ static void *ble_connect_device(void *arg) {
         gatt_connection = gattlib_connect(adapter, addr, GATTLIB_CONNECTION_OPTIONS_LEGACY_DEFAULT, 0);
         if (gatt_connection == NULL) {
             GATTLIB_LOG(GATTLIB_ERROR, "Fail to connect to the bluetooth device.");
-            exit(-1);
+            return NULL;
         } else {
             puts("Succeeded to connect to the bluetooth device.");
         }
@@ -169,6 +169,7 @@ int main(int argc, const char *argv[]) {
         }
 
         char * mac = "D8:48:DD:70:24:8F";
+        //char * mac = "EB:01:B5:48:2D:EE";
 
         int paired = gattlib_is_paired(adapter, mac);
         printf("adapter is paired %d\n", paired);
