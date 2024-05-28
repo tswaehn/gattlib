@@ -1,5 +1,6 @@
 # IDE files
 .vscode/
+.idea/
 
 # Generated files
 build
@@ -7,3 +8,4 @@ __pycache__
 MANIFEST.in
 dist
 gattlib-py/gattlib_py.egg-info/
+cmake-build-debug/
