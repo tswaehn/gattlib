@@ -95,6 +95,7 @@ static void *ble_connect_device(void *arg) {
         gatt_connection = gattlib_connect(adapter, addr, GATTLIB_CONNECTION_OPTIONS_LEGACY_DEFAULT, 0);
         if (gatt_connection == NULL) {
             GATTLIB_LOG(GATTLIB_ERROR, "Fail to connect to the bluetooth device.");
+            sleep(1);
             return NULL;
         } else {
             puts("Succeeded to connect to the bluetooth device.");
