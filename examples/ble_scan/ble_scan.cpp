@@ -48,6 +48,7 @@ LIST_HEAD(listhead, connection_t) g_ble_connections;
 struct connection_t {
 	pthread_t thread;
 	char* addr;
+    void * adapter;
 	LIST_ENTRY(connection_t) entries;
 };
 
@@ -85,20 +86,16 @@ void printMemoryUsage() {
 static void *ble_connect_device(void *arg) {
 	struct connection_t *connection = (struct connection_t*) arg;
 	char* addr = connection->addr;
+    void * adapter = connection->adapter;
 	gatt_connection_t* gatt_connection;
-	gattlib_primary_service_t* services;
-	gattlib_characteristic_t* characteristics;
-	int services_count, characteristics_count;
-	char uuid_str[MAX_LEN_UUID_STR + 1];
-	int ret, i;
 
 
         printf("------------START %s ---------------\n", addr);
 
-        gatt_connection = gattlib_connect(NULL, addr, GATTLIB_CONNECTION_OPTIONS_LEGACY_DEFAULT, 0);
+        gatt_connection = gattlib_connect(adapter, addr, GATTLIB_CONNECTION_OPTIONS_LEGACY_DEFAULT, 0);
         if (gatt_connection == NULL) {
             GATTLIB_LOG(GATTLIB_ERROR, "Fail to connect to the bluetooth device.");
-            goto connection_exit;
+            exit(-1);
         } else {
             puts("Succeeded to connect to the bluetooth device.");
         }
@@ -106,7 +103,6 @@ static void *ble_connect_device(void *arg) {
         gattlib_disconnect(gatt_connection);
         puts("disconnected from device");
 
-connection_exit:
 	printf("------------DONE %s ---------------\n", addr);
 	return NULL;
 }
@@ -164,6 +160,7 @@ int main(int argc, const char *argv[]) {
         printf("iteration %d\n", x);
         printMemoryUsage();
 
+
         puts("open adapter");
         ret = gattlib_adapter_open(adapter_name, &adapter);
         if (ret) {
@@ -175,15 +172,17 @@ int main(int argc, const char *argv[]) {
 
         struct connection_t connection = {
                 .addr = mac,
+                .adapter = adapter,
         };
 
-        //ble_connect_device(&connection);
+        ble_connect_device(&connection);
 
 
         puts("close adapter");
         gattlib_adapter_close(adapter);
 
         sleep(1);
+
     }
 	puts("Scan completed");
 	pthread_mutex_unlock(&g_mutex);
